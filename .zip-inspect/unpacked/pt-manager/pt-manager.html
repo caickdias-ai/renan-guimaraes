@@ -1,0 +1,150 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>PT Manager</title>
+<style>
+:root{--bg:#f4f5f7;--c:#fff;--t:#16181d;--m:#6b7280;--p:#e8590c;--b:#e2e5ea;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111317;--c:#1b1e24;--t:#f1f3f5;--m:#9aa1ad;--b:#2c313a}}
+:root[data-theme="dark"]{--bg:#111317;--c:#1b1e24;--t:#f1f3f5;--m:#9aa1ad;--b:#2c313a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:15px system-ui,sans-serif}
+#app{max-width:480px;margin:0 auto;padding:12px 12px 80px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+h1{font-size:18px;margin:0;color:var(--p)}h3{margin:0 0 8px;font-size:16px}
+.card{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:12px;margin-bottom:10px}
+label{display:block;font-size:12px;color:var(--m);margin:6px 0}
+input,select,textarea{width:100%;padding:9px;border:1px solid var(--b);border-radius:8px;background:var(--bg);color:var(--t);font:inherit;margin-top:3px}
+button{background:var(--p);color:#fff;border:0;border-radius:8px;padding:9px 13px;font:inherit;cursor:pointer;margin:4px 4px 0 0}
+button.ghost{background:transparent;color:var(--t);border:1px solid var(--b)}button.ln{background:none;color:var(--p);padding:4px 0}
+.seg button{padding:6px 10px;font-size:13px}.row{display:flex;gap:8px}.row>*{flex:1}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--c);border-top:1px solid var(--b);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav div{display:flex;max-width:480px;width:100%}nav button{flex:1;background:none;color:var(--m);border-radius:0;margin:0;padding:12px 2px;font-size:12px}nav button.on{color:var(--p);font-weight:700}
+.it{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--b)}.it:first-of-type{border-top:0}
+.m{color:var(--m);font-size:12px}.tag{background:var(--bg);border-radius:20px;padding:2px 8px;font-size:12px;color:var(--m)}
+.msg{max-width:80%;padding:8px 10px;border-radius:12px;margin:4px 0;background:var(--bg)}.msg.me{margin-left:auto;background:var(--p);color:#fff}
+#toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:20px;display:none;z-index:9}
+a{color:var(--p)}svg{width:100%;height:auto}code{word-break:break-all;font-size:12px}
+</style></head><body><div id="app"></div><div id="toast"></div>
+<script>
+const K='ptm1',$=s=>document.querySelector(s),v=id=>($('#'+id)||{}).value||'';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,8),today=()=>new Date().toISOString().slice(0,10);
+const G={Pernas:['Agachamento livre','Leg press 45','Cadeira extensora','Mesa flexora','Afundo','Stiff'],Glúteos:['Elevação pélvica','Cadeira abdutora','Glúteo na polia','Agachamento sumô'],Peito:['Supino reto','Supino inclinado','Crucifixo','Flexão de braço'],Costas:['Puxada frontal','Remada curvada','Remada baixa','Pulldown'],Ombros:['Desenvolvimento','Elevação lateral','Elevação frontal'],Bíceps:['Rosca direta','Rosca martelo'],Tríceps:['Tríceps corda','Tríceps testa'],Core:['Prancha','Abdominal infra']};
+const D={st:[],pl:[{n:'Mensal',v:150},{n:'Trimestral',v:400}],wk:{},di:{},an:{},pr:{},fb:{},ch:{},
+qs:[{q:'Possui alguma lesão ou dor?',t:'text'},{q:'Já fez alguma cirurgia?',t:'yn'},{q:'Pratica atividade física atualmente?',t:'yn'},{q:'Usa algum medicamento?',t:'text'},{q:'Qual é o seu objetivo?',t:'text'}]};
+let S;try{S=JSON.parse(localStorage.getItem(K))}catch(e){}S=S||D;
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const V={mode:'pro',tab:'alunos',sid:null,det:null,form:location.hash.slice(1)||null,dr:{name:'',items:[]},grp:'Pernas',mk:'peso'};
+const TABS={pro:[['alunos','Alunos'],['treinos','Treinos'],['dieta','Dieta'],['anamnese','Anamnese'],['chat','Chat']],al:[['treinos','Treinos'],['progresso','Progresso'],['feedback','Feedback'],['chat','Chat']]};
+const L={nome:'Nome',tel:'Telefone',nasc:'Nascimento',obj:'Objetivo'};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',1800)};
+const sel=(k,o,c,x='')=>`<select data-set="${k}" ${x}>${o.map(a=>`<option value="${esc(a[0])}" ${a[0]==c?'selected':''}>${esc(a[1])}</option>`).join('')}</select>`;
+const cur=()=>{if(!S.st.find(s=>s.id==V.sid))V.sid=S.st[0]?.id||null;return S.st.find(s=>s.id==V.sid)};
+const pick=()=>S.st.length?`<label>Aluno${sel('sid',S.st.map(s=>[s.id,s.nome||'(sem nome)']),V.sid)}</label>`:'';
+const empty=t=>`<div class="card m">${t}</div>`;
+const base=()=>location.href.split('#')[0];
+const exOpts=()=>Object.values(G).flat();
+const vid=n=>`https://www.youtube.com/results?search_query=${encodeURIComponent(n+' execução correta')}`;
+
+function chat(sid,me){const m=S.ch[sid]||[];return `<div class="card">${m.map(x=>`<div class="msg ${x.f==me?'me':''}">${esc(x.t)}<div class="m" style="color:inherit;opacity:.7">${x.d}</div></div>`).join('')||'<span class="m">Sem mensagens.</span>'}
+<div class="row" style="margin-top:8px"><input id="cm" placeholder="Mensagem"><button data-a="send" data-w="${me}" style="flex:0">Enviar</button></div></div>`}
+
+function vAlunos(){
+ if(V.det){const s=S.st.find(x=>x.id==V.det);if(!s){V.det=null;return vAlunos()}
+  const an=S.an[s.id],fb=S.fb[s.id]||[];
+  return `<button class="ln" data-a="back">← Voltar</button><div class="card"><h3>Dados do aluno</h3>
+  ${Object.keys(L).map(f=>`<label>${L[f]}<input id="f_${f}" value="${esc(s[f])}"></label>`).join('')}
+  <label>Plano<select id="f_plano">${S.pl.map(p=>`<option ${p.n==s.plano?'selected':''}>${esc(p.n)}</option>`).join('')}<option ${s.plano=='A definir'?'selected':''}>A definir</option></select></label>
+  <button data-a="saveSt" data-id="${s.id}">Salvar</button><button class="ghost" data-a="delSt" data-id="${s.id}">Excluir</button></div>
+  <div class="card"><h3>Anamnese</h3>${an?S.qs.map((q,i)=>`<div class="it"><span>${esc(q.q)}</span><b>${esc(an.a[i]||'-')}</b></div>`).join(''):'<span class="m">Ainda não respondida.</span>'}</div>
+  <div class="card"><h3>Feedbacks dos treinos</h3>${fb.map(f=>`<div class="it"><span>${esc(f.w)} · nível ${f.n}/5<br><span class="m">${esc(f.m)}</span></span><span class="m">${f.d}</span></div>`).join('')||'<span class="m">Nenhum.</span>'}</div>`}
+ return `<div class="card"><h3>Cadastro por link</h3><div class="m">Envie ao cliente para ele mesmo preencher:</div><code>${base()}#cadastro</code><br>
+ <button data-a="copy" data-t="${base()}#cadastro">Copiar link</button><button class="ghost" data-a="openForm" data-f="cadastro">Ver formulário do aluno</button></div>
+ <div class="card"><h3>Alunos (${S.st.length})</h3>${S.st.map(s=>`<div class="it" data-a="open" data-id="${s.id}" style="cursor:pointer"><span>${esc(s.nome||'(sem nome)')}<br><span class="m">${esc(s.obj||'')}</span></span><span class="tag">${esc(s.plano)}</span></div>`).join('')||'<span class="m">Nenhum aluno.</span>'}
+ <button data-a="newSt">+ Novo aluno</button></div>
+ <div class="card"><h3>Planos</h3>${S.pl.map(p=>`<div class="it"><span>${esc(p.n)}</span><span>R$ ${p.v}</span></div>`).join('')}
+ <div class="row"><input id="pn" placeholder="Nome do plano"><input id="pv" type="number" placeholder="Valor"></div><button data-a="addPl">Adicionar plano</button></div>`}
+
+function vTreinos(){const s=cur();if(!s)return empty('Cadastre um aluno primeiro.');
+ const w=S.wk[s.id]||[],d=V.dr;
+ return pick()+`<div class="card"><h3>✨ Gerar treino com IA</h3><div class="row"><label>Objetivo<select id="ag"><option>Hipertrofia</option><option>Emagrecimento</option><option>Condicionamento</option></select></label>
+ <label>Nível<select id="al"><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></label></div>
+ <div class="row"><label>Dias/semana<select id="ad"><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
+ <label>Foco<select id="af"><option>Equilibrado</option><option>Inferiores</option></select></label></div><button data-a="gen">Gerar treinos</button></div>
+ <div class="card"><h3>Montar treino manual</h3><label>Nome<input id="dn" value="${esc(d.name)}" placeholder="Ex.: Treino A - Inferiores"></label>
+ <div class="row"><label>Grupo${sel('grp',Object.keys(G).map(g=>[g,g]),V.grp)}</label><label>Exercício<select id="ex">${G[V.grp].map(e=>`<option>${e}</option>`).join('')}</select></label></div>
+ <div class="row"><label>Séries<input id="se" type="number" value="3"></label><label>Repetições<input id="re" value="12"></label></div><button data-a="addIt">+ Exercício</button>
+ ${d.items.map((x,i)=>`<div class="it"><span>${esc(x.ex)} · ${x.s}x${esc(x.r)}</span><button class="ghost" data-a="rmIt" data-i="${i}">✕</button></div>`).join('')}
+ ${d.items.length?'<button data-a="saveWk">Salvar treino</button>':''}</div>
+ <div class="card"><h3>Treinos do aluno</h3>${w.map((t,i)=>`<div style="margin-bottom:8px"><b>${esc(t.name)}</b> <button class="ghost" data-a="delWk" data-i="${i}">Excluir</button>${t.items.map(x=>`<div class="m">${esc(x.ex)} · ${x.s}x${esc(x.r)}</div>`).join('')}</div>`).join('')||'<span class="m">Sem treinos.</span>'}</div>`}
+
+function vDieta(){const s=cur();if(!s)return empty('Cadastre um aluno primeiro.');
+ const d=S.di[s.id]||[{n:'Café da manhã',t:''},{n:'Almoço',t:''},{n:'Lanche',t:''},{n:'Jantar',t:''}];
+ return pick()+`<div class="card"><h3>Dieta</h3>${d.map((m,i)=>`<label>${esc(m.n)}<textarea id="d${i}" rows="3">${esc(m.t)}</textarea></label>`).join('')}
+ <div class="row"><input id="mn" placeholder="Nova refeição"><button data-a="addMeal" style="flex:0">+</button></div><button data-a="saveDi">Salvar dieta</button></div>`}
+
+function vAnamnese(){return `<div class="card"><h3>Ficha de anamnese</h3>${S.qs.map((q,i)=>`<div class="row" style="margin-bottom:6px"><input id="q${i}" value="${esc(q.q)}" style="flex:3"><select id="t${i}"><option value="text" ${q.t=='text'?'selected':''}>Texto</option><option value="yn" ${q.t=='yn'?'selected':''}>Sim/Não</option></select><button class="ghost" data-a="rmQ" data-i="${i}" style="flex:0">✕</button></div>`).join('')}
+ <button data-a="addQ" class="ghost">+ Pergunta</button><button data-a="saveQs">Salvar ficha</button></div>
+ <div class="card"><h3>Enviar ao aluno</h3><code>${base()}#anamnese</code><br><button data-a="copy" data-t="${base()}#anamnese">Copiar link</button><button class="ghost" data-a="openForm" data-f="anamnese">Ver como aluno</button></div>`}
+
+function vForm(){
+ if(V.form=='cadastro')return `<div class="card"><h3>Cadastro do aluno</h3>${['nome','tel','nasc','obj'].map(f=>`<label>${L[f]}<input id="c_${f}"></label>`).join('')}<button data-a="subCad">Enviar cadastro</button><button class="ghost" data-a="closeForm">Fechar</button></div>`;
+ return `<div class="card"><h3>Anamnese</h3>${S.st.length?`<label>Seu nome${sel('sid',S.st.map(s=>[s.id,s.nome]),V.sid)}</label>`:'<span class="m">Cadastre-se primeiro.</span>'}
+ ${S.qs.map((q,i)=>`<label>${esc(q.q)}${q.t=='yn'?`<select id="a${i}"><option>Não</option><option>Sim</option></select>`:`<input id="a${i}">`}</label>`).join('')}<button data-a="subAn">Enviar</button><button class="ghost" data-a="closeForm">Fechar</button></div>`}
+
+function vAlTreinos(){const s=cur();if(!s)return empty('Nenhum aluno cadastrado.');const w=S.wk[s.id]||[],pr=S.pr[s.id]||[];
+ return w.map(t=>`<div class="card"><h3>${esc(t.name)}</h3>${t.items.map(x=>{const l=pr.filter(p=>p.k=='carga:'+x.ex).pop();return `<div class="it"><span>${esc(x.ex)}<br><span class="m">${x.s}x${esc(x.r)}${l?' · última carga '+l.v+' kg':''}</span></span><a href="${vid(x.ex)}" target="_blank" rel="noopener">▶ vídeo</a></div>`}).join('')}</div>`).join('')||empty('Seu professor ainda não montou seu treino.')}
+
+function chart(pts){if(pts.length<2)return '<div class="m">Registre ao menos 2 valores para ver o gráfico.</div>';
+ const ys=pts.map(p=>+p.v),mn=Math.min(...ys),mx=Math.max(...ys),r=mx-mn||1,X=i=>20+i*(260/(pts.length-1)),Y=y=>110-(y-mn)/r*90;
+ return `<svg viewBox="0 0 300 130"><polyline fill="none" stroke="var(--p)" stroke-width="2.5" points="${pts.map((p,i)=>X(i)+','+Y(p.v)).join(' ')}"/>${pts.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p.v)}" r="3.5" fill="var(--p)"/><text x="${X(i)}" y="${Y(p.v)-7}" font-size="9" text-anchor="middle" fill="var(--t)">${p.v}</text>`).join('')}</svg>`}
+
+function vProg(){const s=cur();if(!s)return empty('Nenhum aluno.');const pr=S.pr[s.id]||[];
+ const ks=['peso','cintura','quadril','braço','coxa',...new Set((S.wk[s.id]||[]).flatMap(t=>t.items.map(x=>'carga:'+x.ex)))];
+ const pts=pr.filter(p=>p.k==V.mk).sort((a,b)=>a.d>b.d?1:-1);
+ return `<div class="card"><h3>Evolução</h3>${sel('mk',ks.map(k=>[k,k.replace('carga:','Carga · ')]),V.mk)}${chart(pts)}</div>
+ <div class="card"><h3>Registrar</h3><div class="row"><input id="pv2" type="number" step="0.1" placeholder="Valor (kg ou cm)"><button data-a="regPr" style="flex:0">Salvar</button></div><div class="m">Registra em: ${esc(V.mk.replace('carga:','Carga · '))}</div></div>`}
+
+function vFb(){const s=cur();if(!s)return empty('Nenhum aluno.');const w=S.wk[s.id]||[];
+ return `<div class="card"><h3>Como foi o treino?</h3>${w.length?`<label>Treino<select id="fw">${w.map(t=>`<option>${esc(t.name)}</option>`).join('')}</select></label>
+ <label>Dificuldade<select id="fn"><option value="1">1 · Muito fácil</option><option value="2">2 · Fácil</option><option value="3" selected>3 · Ok</option><option value="4">4 · Difícil</option><option value="5">5 · Muito difícil</option></select></label>
+ <label>Mensagem<textarea id="fm" rows="3"></textarea></label><button data-a="sendFb">Enviar feedback</button>`:'<span class="m">Sem treinos ainda.</span>'}</div>`}
+
+function R(){let h=`<header><h1>PT Manager</h1><div class="seg"><button class="${V.mode=='pro'?'':'ghost'}" data-a="mode" data-m="pro">Professor</button><button class="${V.mode=='al'?'':'ghost'}" data-a="mode" data-m="al">Aluno</button></div></header>`;
+ if(V.form){$('#app').innerHTML=h+vForm();return}
+ const s=cur();
+ if(V.mode=='al')h+=pick();
+ const t=V.tab,P=V.mode=='pro';
+ h+=P?(t=='alunos'?vAlunos():t=='treinos'?vTreinos():t=='dieta'?vDieta():t=='anamnese'?vAnamnese():(s?pick()+chat(s.id,'pro'):empty('Cadastre um aluno primeiro.'))):
+ (t=='treinos'?vAlTreinos():t=='progresso'?vProg():t=='feedback'?vFb():(s?chat(s.id,'al'):empty('Nenhum aluno.')));
+ h+=`<nav><div>${TABS[V.mode].map(x=>`<button class="${t==x[0]?'on':''}" data-a="tab" data-t="${x[0]}">${x[1]}</button>`).join('')}</div></nav>`;
+ $('#app').innerHTML=h}
+
+const sync=()=>{if($('#dn'))V.dr.name=$('#dn').value};
+const act={
+ mode:d=>{V.mode=d.m;V.tab=TABS[d.m][0][0];V.det=null},tab:d=>{V.tab=d.t;V.det=null},back:()=>V.det=null,open:d=>V.det=d.id,
+ newSt:()=>{const s={id:uid(),nome:'',tel:'',nasc:'',obj:'',plano:'A definir'};S.st.push(s);V.det=s.id;save()},
+ saveSt:d=>{const s=S.st.find(x=>x.id==d.id);Object.keys(L).forEach(f=>s[f]=v('f_'+f));s.plano=v('f_plano');save();toast('Salvo')},
+ delSt:d=>{S.st=S.st.filter(x=>x.id!=d.id);V.det=null;save()},
+ addPl:()=>{if(v('pn')){S.pl.push({n:v('pn'),v:+v('pv')||0});save()}},
+ copy:d=>{try{navigator.clipboard.writeText(d.t)}catch(e){}toast('Link copiado')},
+ openForm:d=>V.form=d.f,closeForm:()=>{V.form=null;history.replaceState(null,'',base())},
+ subCad:()=>{if(!v('c_nome'))return toast('Informe o nome');S.st.push({id:uid(),nome:v('c_nome'),tel:v('c_tel'),nasc:v('c_nasc'),obj:v('c_obj'),plano:'A definir'});save();toast('Cadastro enviado');act.closeForm()},
+ subAn:()=>{if(!V.sid)return;S.an[V.sid]={d:today(),a:Object.fromEntries(S.qs.map((q,i)=>[i,v('a'+i)]))};save();toast('Anamnese enviada');act.closeForm()},
+ addIt:()=>{sync();V.dr.items.push({ex:v('ex'),s:+v('se')||3,r:v('re')||'12'})},rmIt:d=>{sync();V.dr.items.splice(d.i,1)},
+ saveWk:()=>{sync();const s=cur();(S.wk[s.id]=S.wk[s.id]||[]).push({name:V.dr.name||'Treino',items:V.dr.items});V.dr={name:'',items:[]};save();toast('Treino salvo')},
+ delWk:d=>{S.wk[V.sid].splice(d.i,1);save()},
+ gen:()=>{const s=cur(),g=v('ag'),lv=v('al'),n=+v('ad'),f=v('af');
+  const T={2:[['Pernas','Glúteos','Core'],['Peito','Costas','Ombros','Bíceps','Tríceps']],3:[['Pernas','Glúteos'],['Peito','Ombros','Tríceps'],['Costas','Bíceps','Core']],4:[['Pernas','Glúteos'],['Peito','Tríceps'],['Glúteos','Pernas','Core'],['Costas','Bíceps','Ombros']],5:[['Pernas','Glúteos'],['Peito','Tríceps'],['Costas','Bíceps'],['Glúteos','Pernas','Core'],['Ombros','Core']]}[n];
+  if(f=='Inferiores'&&n>=3)T[n-1]=['Glúteos','Pernas','Core'];
+  const sr=g=='Hipertrofia'?(lv=='Iniciante'?[3,'12']:[4,'8-12']):g=='Emagrecimento'?[3,'15']:[3,'12-15'];
+  const L2=T.map((gs,i)=>({name:`Treino ${'ABCDE'[i]} - ${gs.join(' / ')} (${g})`,items:gs.flatMap(x=>{const a=G[x],k=gs.length>3?1:2;return Array.from({length:k},(_,j)=>({ex:a[(i+j)%a.length],s:sr[0],r:sr[1]}))})}));
+  S.wk[s.id]=(S.wk[s.id]||[]).concat(L2);save();toast('Treinos gerados')},
+ addMeal:()=>{const s=cur(),d=S.di[s.id]||[{n:'Café da manhã',t:''},{n:'Almoço',t:''},{n:'Lanche',t:''},{n:'Jantar',t:''}];d.forEach((m,i)=>m.t=v('d'+i));if(v('mn'))d.push({n:v('mn'),t:''});S.di[s.id]=d;save()},
+ saveDi:()=>{const s=cur(),d=S.di[s.id]||[{n:'Café da manhã',t:''},{n:'Almoço',t:''},{n:'Lanche',t:''},{n:'Jantar',t:''}];d.forEach((m,i)=>m.t=v('d'+i));S.di[s.id]=d;save();toast('Dieta salva')},
+ addQ:()=>{act.saveQs(1);S.qs.push({q:'',t:'text'})},rmQ:d=>{act.saveQs(1);S.qs.splice(d.i,1);save()},
+ saveQs:q=>{S.qs.forEach((x,i)=>{x.q=v('q'+i);x.t=v('t'+i)});save();if(q!==1)toast('Ficha salva')},
+ regPr:()=>{const s=cur(),x=v('pv2');if(!x)return;(S.pr[s.id]=S.pr[s.id]||[]).push({d:today(),k:V.mk,v:+x});save();toast('Registrado')},
+ sendFb:()=>{const s=cur();(S.fb[s.id]=S.fb[s.id]||[]).push({d:today(),w:v('fw'),n:v('fn'),m:v('fm')});save();toast('Feedback enviado')},
+ send:d=>{const s=cur(),t=v('cm');if(!t)return;(S.ch[s.id]=S.ch[s.id]||[]).push({f:d.w,t,d:new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})});save()}
+};
+document.addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(a){act[a.dataset.a](a.dataset);R()}});
+document.addEventListener('change',e=>{const k=e.target.dataset.set;if(k){sync();V[k]=e.target.value;R()}});
+R();
+</script></body></html>

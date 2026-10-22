@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Guimarães Treinador",
+    "slug": "pt-manager",
+    "scheme": "ptmanager",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/brand/app-icon.png",
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/brand/app-icon.png",
+          "imageWidth": 170,
+          "resizeMode": "contain",
+          "backgroundColor": "#313131"
+        }
+      ]
+    ],
+    "ios": { "bundleIdentifier": "com.seudominio.ptmanager" },
+    "android": {
+      "package": "com.seudominio.ptmanager",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/app-icon.png",
+        "backgroundColor": "#313131"
+      }
+    },
+    "web": { "favicon": "./assets/brand/app-icon.png" }
+  }
+}
