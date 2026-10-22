@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import Image from 'next/image'
 import {
   Bell, CalendarDays, ChevronRight, CirclePlus, Dumbbell, LayoutDashboard,
   MessageCircle, MoreHorizontal, Plus, Search, Settings2, Sparkles, TrendingUp,
@@ -11,6 +10,8 @@ import {
 type Tab = 'Visão geral' | 'Alunos' | 'Treinos' | 'Agenda'
 
 type Student = { name: string; initials: string; goal: string; status: string; color: string; last: string }
+
+const brandLogo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202026-10-14%20at%205.06.22%20PM-G6StHp4UaI2MOBRFjB5W1x1P7FZmxs.jpeg'
 
 const students: Student[] = [
   { name: 'Mariana Costa', initials: 'MC', goal: 'Hipertrofia', status: 'Em dia', color: 'bg-[#e5d8ff] text-[#6541a1]', last: 'Treino atualizado hoje' },
@@ -35,9 +36,8 @@ export default function Home() {
     <main className="min-h-screen bg-[#f4f5f3] text-[#242624]">
       <div className="mx-auto flex min-h-screen max-w-[1440px]">
         <aside className="hidden w-[244px] flex-col border-r border-[#e2e5e0] bg-[#fbfcfa] px-5 py-6 lg:flex">
-          <div className="mb-12 flex items-center gap-3 px-2">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-[#292b29] p-2"><Image src="/guimaraes-logo.png" alt="Guimarães Treinador" width={24} height={24} className="brightness-0 invert" /></div>
-            <div><p className="text-[15px] font-extrabold tracking-tight">Guimarães</p><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8d938a]">Treinador</p></div>
+          <div className="mb-12 px-2">
+            <img src={brandLogo} alt="Guimarães Treinador" className="h-auto w-full max-w-[190px] object-contain" />
           </div>
           <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#a1a69f]">Menu principal</p>
           <nav className="flex flex-col gap-1">
@@ -49,7 +49,7 @@ export default function Home() {
         </aside>
 
         <section className="flex-1 overflow-hidden">
-          <header className="flex items-center justify-between border-b border-[#e2e5e0] bg-[#fbfcfa] px-5 py-4 sm:px-8 lg:px-10"><div className="flex items-center gap-3 lg:hidden"><div className="flex size-9 items-center justify-center rounded-xl bg-[#292b29] p-2"><Image src="/guimaraes-logo.png" alt="Guimarães Treinador" width={24} height={24} className="brightness-0 invert" /></div><span className="text-sm font-extrabold">Guimarães</span></div><div className="hidden text-sm text-[#7d857b] lg:block">Quarta-feira, 22 de outubro de 2026</div><div className="flex items-center gap-4"><button aria-label="Notificações" onClick={() => notify('Você não tem novas notificações')} className="relative rounded-full p-2 text-[#737a71] hover:bg-[#f0f2ef]"><Bell className="size-[18px]" /><span className="absolute right-1 top-1 size-1.5 rounded-full bg-[#df7b54]" /></button><div className="flex items-center gap-2 border-l border-[#e2e5e0] pl-4"><div className="flex size-8 items-center justify-center rounded-full bg-[#292b29] text-xs font-bold text-white">GR</div><div className="hidden sm:block"><p className="text-xs font-bold">Guilherme</p><p className="text-[10px] text-[#8d938a]">Personal trainer</p></div></div></div></header>
+          <header className="flex items-center justify-between border-b border-[#e2e5e0] bg-[#fbfcfa] px-5 py-4 sm:px-8 lg:px-10"><div className="flex items-center gap-3 lg:hidden"><img src={brandLogo} alt="Guimarães Treinador" className="h-auto w-[150px] object-contain" /></div><div className="hidden text-sm text-[#7d857b] lg:block">Quarta-feira, 22 de outubro de 2026</div><div className="flex items-center gap-4"><button aria-label="Notificações" onClick={() => notify('Você não tem novas notificações')} className="relative rounded-full p-2 text-[#737a71] hover:bg-[#f0f2ef]"><Bell className="size-[18px]" /><span className="absolute right-1 top-1 size-1.5 rounded-full bg-[#df7b54]" /></button><div className="flex items-center gap-2 border-l border-[#e2e5e0] pl-4"><div className="flex size-8 items-center justify-center rounded-full bg-[#292b29] text-xs font-bold text-white">GR</div><div className="hidden sm:block"><p className="text-xs font-bold">Guilherme</p><p className="text-[10px] text-[#8d938a]">Personal trainer</p></div></div></div></header>
 
           <div className="px-5 pb-28 pt-7 sm:px-8 lg:px-10 lg:pb-10 lg:pt-9">
             <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#8a9385]">Seu acompanhamento</p><h1 className="text-[28px] font-extrabold tracking-[-0.04em] sm:text-[34px]">Bom dia, Guilherme <span className="font-normal">.</span></h1><p className="mt-2 text-sm text-[#7b837a]">Aqui está o resumo da sua operação hoje.</p></div><button onClick={() => setShowStudentForm(true)} className="flex items-center justify-center gap-2 rounded-xl bg-[#292b29] px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#3b3e3b]"><CirclePlus className="size-4" /> Novo aluno</button></div>
