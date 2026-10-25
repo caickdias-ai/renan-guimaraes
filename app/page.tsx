@@ -1,11 +1,13 @@
 'use client'
 
+import useSWR from 'swr'
 import { useMemo, useState } from 'react'
 import {
   Bell, CalendarDays, ChevronRight, CirclePlus, Dumbbell, LayoutDashboard,
   MessageCircle, MoreHorizontal, Plus, Search, Settings2, Sparkles, TrendingUp,
   UserRound, Users, Utensils, X
 } from 'lucide-react'
+import { supabase } from '@/lib/supabase/client'
 
 type Tab = 'Visão geral' | 'Alunos' | 'Treinos' | 'Agenda'
 
@@ -13,12 +15,7 @@ type Student = { name: string; initials: string; goal: string; status: string; c
 
 const brandLogo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202026-10-14%20at%205.06.22%20PM-G6StHp4UaI2MOBRFjB5W1x1P7FZmxs.jpeg'
 
-const students: Student[] = [
-  { name: 'Mariana Costa', initials: 'MC', goal: 'Hipertrofia', status: 'Em dia', color: 'bg-[#e5d8ff] text-[#6541a1]', last: 'Treino atualizado hoje' },
-  { name: 'Rafael Mendes', initials: 'RM', goal: 'Emagrecimento', status: 'Atenção', color: 'bg-[#d2eee6] text-[#237866]', last: 'Check-in há 3 dias' },
-  { name: 'Camila Rocha', initials: 'CR', goal: 'Condicionamento', status: 'Em dia', color: 'bg-[#ffe0cb] text-[#a35423]', last: 'Treino atualizado ontem' },
-  { name: 'Lucas Almeida', initials: 'LA', goal: 'Força', status: 'Em dia', color: 'bg-[#dce4fa] text-[#3d5ca8]', last: 'Check-in há 1 dia' },
-]
+const studentColors = ['bg-[#e5d8ff] text-[#6541a1]', 'bg-[#d2eee6] text-[#237866}', 'bg-[#ffe0cb] text-[#a35423]', 'bg-[#dce4fa] text-[#3d5ca8]']
 
 const week = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
 
@@ -28,9 +25,26 @@ export default function Home() {
   const [showStudentForm, setShowStudentForm] = useState(false)
   const [toast, setToast] = useState('')
   const [selectedDay, setSelectedDay] = useState(2)
-  const [showStudentPreview, setShowStudentPreview] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newGoal, setNewGoal] = useState('')
+  const { data: students = [], mutate, error, isLoading } = useSWR<Student[]>('trainer-students', async () => {
+    if (!supabase) return []
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+    const { data, error: queryError } = await supabase.from('clients').select('id, full_name, goal, status, updated_at').eq('trainer_id', user.id).order('created_at', { ascending: false })
+    if (queryError) throw queryError
+    return (data ?? []).map((client, index) => ({ id: client.id, name: client.full_name, initials: client.full_name.split(' ').map((part: string) => part[0]).slice(0, 2).join('').toUpperCase(), goal: client.goal ?? 'Objetivo não informado', status: client.status === 'active' ? 'Em dia' : client.status === 'pending' ? 'Pendente' : 'Inativo', color: studentColors[index % studentColors.length], last: 'Cadastro atualizado recentemente' }))
+  })
 
-  const filteredStudents = useMemo(() => students.filter((student) => student.name.toLowerCase().includes(search.toLowerCase())), [search])
+  const filteredStudents = useMemo(() => students.filter((student) => student.name.toLowerCase().includes(search.toLowerCase())), [students, search])
+  const saveStudent = async () => {
+    if (!supabase) return notify('Conexão com o Supabase indisponível')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !newName.trim()) return notify('Informe o nome do aluno')
+    const { error: insertError } = await supabase.from('clients').insert({ trainer_id: user.id, full_name: newName.trim(), goal: newGoal.trim() || null, status: 'active' })
+    if (insertError) return notify('Não foi possível salvar o aluno')
+    setNewName(''); setNewGoal(''); setShowStudentForm(false); await mutate(); notify('Aluno adicionado com sucesso')
+  }
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2600) }
 
   return (
@@ -71,9 +85,8 @@ export default function Home() {
         </section>
       </div>
       <nav className="fixed bottom-0 left-0 right-0 z-20 flex justify-around border-t border-[#e2e5e0] bg-[#fbfcfa]/95 px-2 py-2 backdrop-blur lg:hidden">{([['Visão geral', LayoutDashboard], ['Alunos', Users], ['Treinos', Dumbbell], ['Agenda', CalendarDays]] as const).map(([label, Icon]) => <button key={label} onClick={() => setActiveTab(label)} className={`flex min-w-16 flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[10px] font-bold ${activeTab === label ? 'text-[#292b29]' : 'text-[#9aa198]'}`}><Icon className="size-[18px]" />{label}</button>)}</nav>
-      {showStudentPreview && <StudentPreview onClose={() => setShowStudentPreview(false)} onNotify={notify} />}
       {toast && <div role="status" className="fixed bottom-20 left-1/2 z-30 -translate-x-1/2 rounded-full bg-[#292b29] px-4 py-2.5 text-xs font-semibold text-white shadow-lg lg:bottom-8">{toast}</div>}
-      {showStudentForm && <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/25 p-0 sm:items-center sm:p-5"><div className="w-full max-w-md rounded-t-3xl bg-[#fbfcfa] p-6 shadow-xl sm:rounded-3xl"><div className="mb-6 flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a9385]">Novo cadastro</p><h2 className="mt-1 text-xl font-extrabold">Adicionar aluno</h2></div><button aria-label="Fechar" onClick={() => setShowStudentForm(false)} className="rounded-full p-1 text-[#7d857b] hover:bg-[#edf0ec]"><X className="size-5" /></button></div><div className="flex flex-col gap-4"><label className="text-xs font-bold text-[#667064]">Nome completo<input className="mt-2 w-full rounded-xl border border-[#dfe4dc] bg-white px-3 py-3 text-sm outline-none focus:border-[#839a78]" placeholder="Ex.: Ana Souza" /></label><label className="text-xs font-bold text-[#667064]">Objetivo<input className="mt-2 w-full rounded-xl border border-[#dfe4dc] bg-white px-3 py-3 text-sm outline-none focus:border-[#839a78]" placeholder="Ex.: ganhar força" /></label><button onClick={() => { setShowStudentForm(false); notify('Aluno adicionado com sucesso') }} className="mt-2 rounded-xl bg-[#292b29] py-3 text-sm font-bold text-white">Salvar aluno</button></div></div></div>}
+      {showStudentForm && <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/25 p-0 sm:items-center sm:p-5"><div className="w-full max-w-md rounded-t-3xl bg-[#fbfcfa] p-6 shadow-xl sm:rounded-3xl"><div className="mb-6 flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8a9385]">Novo cadastro</p><h2 className="mt-1 text-xl font-extrabold">Adicionar aluno</h2></div><button aria-label="Fechar" onClick={() => setShowStudentForm(false)} className="rounded-full p-1 text-[#7d857b] hover:bg-[#edf0ec]"><X className="size-5" /></button></div><div className="flex flex-col gap-4"><label className="text-xs font-bold text-[#667064]">Nome completo<input value={newName} onChange={(event) => setNewName(event.target.value)} className="mt-2 w-full rounded-xl border border-[#dfe4dc] bg-white px-3 py-3 text-sm outline-none focus:border-[#839a78]" placeholder="Ex.: Ana Souza" /></label><label className="text-xs font-bold text-[#667064]">Objetivo<input value={newGoal} onChange={(event) => setNewGoal(event.target.value)} className="mt-2 w-full rounded-xl border border-[#dfe4dc] bg-white px-3 py-3 text-sm outline-none focus:border-[#839a78]" placeholder="Ex.: ganhar força" /></label><button onClick={saveStudent} className="mt-2 rounded-xl bg-[#292b29] py-3 text-sm font-bold text-white">Salvar aluno</button></div></div></div>}
     </main>
   )
 }
