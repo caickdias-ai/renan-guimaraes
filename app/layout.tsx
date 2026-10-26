@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { RegisterSW } from './register-sw'
 
 export const metadata: Metadata = {
   title: 'Guimarães Treinador | Gestão de alunos',
@@ -15,5 +16,5 @@ export const viewport: Viewport = {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="pt-BR"><body className="antialiased">{children}{process.env.NODE_ENV === 'production' && <Analytics />}</body></html>
+  return <html lang="pt-BR"><body className="antialiased"><RegisterSW />{children}{process.env.NODE_ENV === 'production' && <Analytics />}</body></html>
 }
