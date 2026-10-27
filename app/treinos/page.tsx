@@ -1,5 +1,5 @@
-import DashboardApp from '@/components/dashboard-app'
+import WorkoutBuilder from '@/components/workout-builder'
 
 export default function TreinosPage() {
-  return <DashboardApp />
+  return <WorkoutBuilder />
 }
