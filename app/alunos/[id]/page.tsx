@@ -1,6 +1,2 @@
-import DashboardApp from '@/components/dashboard-app'
-
-export default async function StudentPage({ params }: { params: Promise<{ id: string }> }) {
-  await params
-  return <DashboardApp />
-}
+import StudentDetail from '@/components/student-detail'
+export default function StudentPage({ params }: { params: Promise<{ id: string }> }) { return <StudentDetail params={params} /> }

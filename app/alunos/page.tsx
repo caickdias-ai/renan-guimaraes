@@ -1,5 +1,2 @@
-import DashboardApp from '@/components/dashboard-app'
-
-export default function AlunosPage() {
-  return <DashboardApp />
-}
+import StudentsPage from '@/components/students-page'
+export default function AlunosPage() { return <StudentsPage /> }
