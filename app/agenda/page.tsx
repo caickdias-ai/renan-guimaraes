@@ -1,5 +1,5 @@
-import DashboardApp from '@/components/dashboard-app'
+import AgendaPage from '@/components/agenda-page'
 
-export default function AgendaPage() {
-  return <DashboardApp />
+export default function Page() {
+  return <AgendaPage />
 }
