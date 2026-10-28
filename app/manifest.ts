@@ -5,9 +5,11 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Guimarães Treinador',
     short_name: 'Guimarães',
     description: 'Gestão de alunos, treinos e nutrição.',
+    id: '/',
+    scope: '/',
     start_url: '/',
     display: 'standalone',
-    background_color: '#f4f5f3',
+    background_color: '#292b29',
     theme_color: '#292b29',
     orientation: 'portrait',
     icons: [

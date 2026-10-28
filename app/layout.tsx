@@ -7,12 +7,14 @@ export const metadata: Metadata = {
   title: 'Guimarães Treinador | Gestão de alunos',
   description: 'Acompanhe alunos, treinos, progresso e agenda em um só lugar.',
   generator: 'v0.app',
+  icons: { icon: '/icon-32.png', apple: '/apple-icon.png' },
+  appleWebApp: { capable: true, title: 'Guimarães', statusBarStyle: 'default' },
 }
 
 export const viewport: Viewport = {
   colorScheme: 'light',
   themeColor: '#292b29',
-  userScalable: false,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

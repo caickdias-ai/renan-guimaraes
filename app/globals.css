@@ -20,3 +20,12 @@ html { background: var(--background); }
 body { margin: 0; min-width: 320px; background: var(--background); color: var(--foreground); font-family: Arial, Helvetica, sans-serif; }
 button, input { font: inherit; }
 button { cursor: pointer; }
+
+@layer components {
+  .field { width: 100%; min-height: 48px; border: 1px solid #dfe5dc; border-radius: 0.75rem; background: #fff; padding: 0.75rem 0.875rem; font-size: 16px; outline: none; }
+  .field:focus { border-color: #667c5d; box-shadow: 0 0 0 3px rgb(102 124 93 / 18%); }
+  .button { min-height: 48px; width: 100%; border-radius: 0.75rem; background: #292b29; padding: 0.75rem 1rem; color: white; font-weight: 700; }
+  .button:disabled { cursor: not-allowed; opacity: 0.55; }
+  .button-secondary { min-height: 48px; width: 100%; border-radius: 0.75rem; background: #eef3eb; padding: 0.75rem 1rem; color: #667c5d; font-weight: 700; }
+}
+
